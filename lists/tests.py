@@ -22,8 +22,8 @@ class HomePageTest(TestCase):
 		request = HttpRequest()
 		response = home_page(request)
 		#print(response.content)
-		expected_html = render_to_string('home.html')
+		expected_html = render_to_string('home.html') # render allows substitution of python variables into HTML
 		self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
-		self.assertTrue(response.content.startswith(b'<html>'))
-		self.assertIn(b'<title>To-Do lists</title>', response.content)
-		self.assertTrue(response.content.strip().endswith(b'</html>'))
+		#self.assertTrue(response.content.startswith(b'<html>')) # The following 3 are testing constants.
+		#self.assertIn(b'<title>To-Do lists</title>', response.content)
+		#self.assertTrue(response.content.strip().endswith(b'</html>'))
