@@ -3,6 +3,7 @@ from django.core.urlresolvers import resolve # resolve is the function Django us
 from django.test import TestCase
 from lists.views import home_page # home_page is the view function
 from django.http import HttpRequest
+from django.template.loader import render_to_string
 
 # Create your tests here.
 # Silly test
@@ -20,6 +21,9 @@ class HomePageTest(TestCase):
 	def test_home_page_returns_correct_html(self):
 		request = HttpRequest()
 		response = home_page(request)
+		#print(response.content)
+		expected_html = render_to_string('home.html')
+		self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
 		self.assertTrue(response.content.startswith(b'<html>'))
 		self.assertIn(b'<title>To-Do lists</title>', response.content)
-		self.assertTrue(response.content.endswith(b'</html>'))
+		self.assertTrue(response.content.strip().endswith(b'</html>'))
