@@ -1,7 +1,7 @@
 
 from django.core.urlresolvers import resolve # resolve is the function Django uses internally to resolve URLs amd find which view functions they should map to. We're checking that resolve when called with '/', the root of the site, finds a function called homepage.
 from django.test import TestCase
-from lists.views import home_page # home_page is the view function
+from .views import home_page # home_page is the view function
 from django.http import HttpRequest
 from django.template.loader import render_to_string
 from lists.models import Item
@@ -22,12 +22,11 @@ class HomePageTest(TestCase):
 	def test_home_page_returns_correct_html(self):
 		request = HttpRequest()
 		response = home_page(request)
-		#print(response.content)
+		#print(response.content.decode())
 		expected_html = render_to_string('home.html') # render allows substitution of python variables into HTML
+		#print(expected_html)
 		self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
-		#self.assertTrue(response.content.startswith(b'<html>')) # The following 3 are testing constants.
-		#self.assertIn(b'<title>To-Do lists</title>', response.content)
-		#self.assertTrue(response.content.strip().endswith(b'</html>'))
+
 	def test_home_page_can_save_a_POST_request(self):
 		request = HttpRequest()
 		request.method = 'POST'
@@ -35,7 +34,35 @@ class HomePageTest(TestCase):
 
 		response = home_page(request)
 		#print(response.content.decode())
-		self.assertIn('A new list item', response.content.decode())
+
+		self.assertEqual(Item.objects.count(), 1)
+		new_item = Item.objects.first() # The same as doing 'objects.all[0]'
+		self.assertEqual(new_item.text, 'A new list item') # Check the item's text is correct
+
+	def test_home_page_redirects_after_POST(self):
+		request = HttpRequest()
+		request.method = 'POST'
+		request.POST['item_text'] = 'A new list item'
+
+		response = home_page(request)
+
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(response['location'], '/')
+
+	def test_home_page_only_saves_items_when_necessary(self):
+		request = HttpRequest()
+		home_page(request)
+		self.assertEqual(Item.objects.count(), 0)
+
+	def test_home_page_displays_all_list_items(self):
+		Item.objects.create(text='itemey 1')
+		Item.objects.create(text='itemey 2')
+
+		request = HttpRequest()
+		response = home_page(request)
+
+		self.assertIn('itemey 1', response.content.decode())
+		self.assertIn('itemey 2', response.content.decode())
 
 class ItemModelTest(TestCase):
 
