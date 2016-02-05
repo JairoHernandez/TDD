@@ -1,17 +1,11 @@
 
 from django.core.urlresolvers import resolve # resolve is the function Django uses internally to resolve URLs amd find which view functions they should map to. We're checking that resolve when called with '/', the root of the site, finds a function called homepage.
 from django.test import TestCase
-from .views import home_page # home_page is the view function
+from .views import home_page, view_list  # home_page is the view function
 from django.http import HttpRequest
 from django.template.loader import render_to_string
 from lists.models import Item
 
-# Create your tests here.
-# Silly test
-#class SmokeTest(TestCase):
-
-#	def test_bad_math(self):
-#		self.assertEqual(1 + 1, 3)
 
 class HomePageTest(TestCase):
 
@@ -47,22 +41,12 @@ class HomePageTest(TestCase):
 		response = home_page(request)
 
 		self.assertEqual(response.status_code, 302)
-		self.assertEqual(response['location'], '/')
+		self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
 
 	def test_home_page_only_saves_items_when_necessary(self):
 		request = HttpRequest()
 		home_page(request)
 		self.assertEqual(Item.objects.count(), 0)
-
-	def test_home_page_displays_all_list_items(self):
-		Item.objects.create(text='itemey 1')
-		Item.objects.create(text='itemey 2')
-
-		request = HttpRequest()
-		response = home_page(request)
-
-		self.assertIn('itemey 1', response.content.decode())
-		self.assertIn('itemey 2', response.content.decode())
 
 class ItemModelTest(TestCase):
 
@@ -83,4 +67,18 @@ class ItemModelTest(TestCase):
 		self.assertEqual(first_saved_item.text, 'The first (ever) list item')
 		self.assertEqual(second_saved_item.text, 'Item the second')
 
+class ListViewTest(TestCase): # Checks URL resolution explicitly, tests view functions by calling them, and check that views render templates all at once.
+	
+	def test_users_list_template(self): # Check that it's using correct template
+		response = self.client.get('/lists/the-only-list-in-the-world/') # If you forget the / test will give this error "AssertionError: No templates used to render the response".
+		self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
+		print("fart")
 
+	def test_displays_all_items(self):
+		Item.objects.create(text='itemey 1')
+		Item.objects.create(text='itemey 2')
+
+		response = self.client.get('/lists/the-only-list-in-the-world/') # Instead of calling the view function directly, we use the Django test cilent, which is an attribute of the Django TestCase called self.client. We test it to get the URL we're testing--it's actually a very similar API to the one that Selenium uses. Some people dont like this because it's too much magic.
+
+		self.assertContains(response, 'itemey 1') # Instead of using the slightly annoying assertIn/response.content.decode() dance, Django provides the assertContains method which knows how to deal with responses and the bytes of their content.
+		self.assertContains(response, 'itemey 2')

@@ -2,7 +2,7 @@
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import unittest
+#import unittest
 
 class NewVisitorTest(LiveServerTestCase):
 
@@ -41,12 +41,12 @@ class NewVisitorTest(LiveServerTestCase):
         # is tying fly-fishing lures)
         inputbox.send_keys('Buy peacock feathers')
 
-        # When she hits enter, the page updates, she is taken to a new URL 
-        # and now the page lists
+        # When she hits enter, the page updates, she is taken to a new URL and now the page lists
         # "1: Buy peacock feathers" as an item in a to-do list table
         inputbox.send_keys(Keys.ENTER)
         #inputbox.send_keys("\n")
         edith_list_url = self.browser.current_url
+        print("Edith>>", edith_list_url)
         self.assertRegex(edith_list_url, '/lists/.+')
         self.check_for_row_in_list_table('1: Buy peacock feathers')
 
@@ -78,10 +78,11 @@ class NewVisitorTest(LiveServerTestCase):
         # interestuing than Edith...
         inputbox = self.browser.find_element_by_id('id_new_item')
         inputbox.send_keys = ('Buy milk')
-        inputbox.send_keys = (Keys.Enter)
+        inputbox.send_keys = (Keys.ENTER)
 
         # Francis gets his own unique URL
         francis_list_url = self.browser.current_url
+        print("Francis>>", francis_list_url)
         self.assertRegex(francis_list_url, '/lists/.+')
         self.assertNotEqual(francis_list,url, edith_list_url)
 
