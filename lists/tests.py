@@ -14,39 +14,24 @@ class HomePageTest(TestCase):
 		self.assertEqual(found.func, home_page)
 
 	def test_home_page_returns_correct_html(self):
-		request = HttpRequest()
+		request = HttpRequest() # Generate request
 		response = home_page(request)
 		#print(response.content.decode())
 		expected_html = render_to_string('home.html') # render allows substitution of python variables into HTML
 		#print(expected_html)
 		self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
 
-	def test_home_page_can_save_a_POST_request(self):
-		request = HttpRequest()
-		request.method = 'POST'
-		request.POST['item_text'] = 'A new list item'
-
-		response = home_page(request)
-		#print(response.content.decode())
+class NewListTest(TestCase):
+	def test_saving_a_POST_request(self):
+		self.client.post('/lists/new', data={'item_text': 'A new list item'}) # Look at class ListViewTest to understand client attribute.
 
 		self.assertEqual(Item.objects.count(), 1)
 		new_item = Item.objects.first() # The same as doing 'objects.all[0]'
 		self.assertEqual(new_item.text, 'A new list item') # Check the item's text is correct
 
-	def test_home_page_redirects_after_POST(self):
-		request = HttpRequest()
-		request.method = 'POST'
-		request.POST['item_text'] = 'A new list item'
-
-		response = home_page(request)
-
-		self.assertEqual(response.status_code, 302)
-		self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
-
-	def test_home_page_only_saves_items_when_necessary(self):
-		request = HttpRequest()
-		home_page(request)
-		self.assertEqual(Item.objects.count(), 0)
+	def test_redirects_after_POST(self):
+		response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
+		self.assertRedirects(response, '/lists/the-only-list-in-the-world/')
 
 class ItemModelTest(TestCase):
 
@@ -72,8 +57,7 @@ class ListViewTest(TestCase): # Checks URL resolution explicitly, tests view fun
 	def test_users_list_template(self): # Check that it's using correct template
 		response = self.client.get('/lists/the-only-list-in-the-world/') # If you forget the / test will give this error "AssertionError: No templates used to render the response".
 		self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
-		print("fart")
-
+		
 	def test_displays_all_items(self):
 		Item.objects.create(text='itemey 1')
 		Item.objects.create(text='itemey 2')
