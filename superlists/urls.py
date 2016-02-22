@@ -1,11 +1,16 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
-urlpatterns = patterns('',
-    # Examples:
-    url(r'^$', 'lists.views.home_page', name='home'), # 'name' value is used by {% url %} template tag in html file
-    url(r'^lists/the-only-list-in-the-world/$', 'lists.views.view_list', name='view_list'),
-    url(r'^lists/new$', 'lists.views.new_list', name='new_list'),
-    # url(r'^blog/', include('blog.urls')),
+from django.conf.urls import include, url
+from lists import views as list_views
+from lists import urls as list_urls
+
+urlpatterns = [
+    url(r'^$', list_views.home_page, name='home'),
+    url(r'^lists/', include(list_urls)),
     # url(r'^admin/', include(admin.site.urls)),
-)
+]
+
+
+# 'name' value is used by {% url %} template tag in html file
+# url(r'^admin/', include(admin.site.urls)),
