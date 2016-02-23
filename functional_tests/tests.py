@@ -3,6 +3,7 @@ from django.test import LiveServerTestCase # Allows to play with a dummy DB.
 from pyvirtualdisplay import Display
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import time
 #import unittest
 
 class NewVisitorTest(LiveServerTestCase):
@@ -11,8 +12,8 @@ class NewVisitorTest(LiveServerTestCase):
         self.browser = webdriver.Firefox()
         self.browser.implicitly_wait(3)
 
-    #def tearDown(self):
-     #   self.browser.quit()
+    def tearDown(self):
+        self.browser.quit()
      
 
 
@@ -25,7 +26,7 @@ class NewVisitorTest(LiveServerTestCase):
     def test_can_start_a_list_and_retrieve_it_later(self):
         # Edith has heard about a cool new online to-do app. She goes
         # to check out its homepage
-        self.browser.get(self.live_server_url)
+        self.browser.get(self.live_server_url) # Replaces the hardcoded url.get('http://localhost:8000')
 
         # She notices the page title and header mention to-do lists
         self.assertIn('To-Do', self.browser.title)
@@ -36,15 +37,15 @@ class NewVisitorTest(LiveServerTestCase):
         inputbox = self.browser.find_element_by_id('id_new_item')
         self.assertEqual(
                 inputbox.get_attribute('placeholder'), 'Enter a to-do item')
-
+    
         # She types "Buy peacock feathers" into a text box (Edith's hobby
         # is tying fly-fishing lures)
         inputbox.send_keys('Buy peacock feathers')
-
+        
         # When she hits enter, the page updates, she is taken to a new URL and now the page lists
         # "1: Buy peacock feathers" as an item in a to-do list table
-        inputbox = self.browser.find_element_by_id('id_new_item')
         inputbox.send_keys(Keys.ENTER)
+        #time.sleep(15)
         #inputbox.send_keys("\n")
         edith_list_url = self.browser.current_url
         print('edith>>', edith_list_url )
@@ -95,8 +96,28 @@ class NewVisitorTest(LiveServerTestCase):
 
         # Satisfied they both go back to sleep
 
-        self.fail('Finish the test!')
+        #self.fail('Finish the test!')
 
         # She visits that URL - her to-do list is still there.
 
         # Satisfied, she goes back to sleep
+
+    def test_layout_and_styling(self):
+        # Edit goes to the home page
+        self.browser.get(self.live_server_url)
+        self.browser.set_window_size(1024, 768)
+
+        # She noticecs the input box is nicely centers
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        self.assertAlmostEqual(inputbox.location['x'] + inputbox.size['width'] / 2, 
+        512, delta=5) # Helps us to deal with rounding errors of the arithmetic to be within +/- 5 pixels.
+
+        # She starts a new list and sees the input is nicely centered too
+        inputbox.send_keys('testin\n')
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        self.assertAlmostEqual(inputbox.location['x'] + inputbox.size['width'] / 2, 
+        512, delta=5)
+
+
+
+
