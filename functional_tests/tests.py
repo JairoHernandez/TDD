@@ -1,12 +1,12 @@
-
-from django.test import LiveServerTestCase # Allows to play with a dummy DB.
-from pyvirtualdisplay import Display
+#from django.test import LiveServerTestCase # Allows to play with a dummy DB.
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 #import unittest
 
-class NewVisitorTest(LiveServerTestCase):
+#class NewVisitorTest(LiveServerTestCase):
+class NewVisitorTest(StaticLiveServerTestCase):
 
     def setUp(self):
         self.browser = webdriver.Firefox()
@@ -41,11 +41,11 @@ class NewVisitorTest(LiveServerTestCase):
         # She types "Buy peacock feathers" into a text box (Edith's hobby
         # is tying fly-fishing lures)
         inputbox.send_keys('Buy peacock feathers')
-        
+        #time.sleep(15)
         # When she hits enter, the page updates, she is taken to a new URL and now the page lists
         # "1: Buy peacock feathers" as an item in a to-do list table
         inputbox.send_keys(Keys.ENTER)
-        #time.sleep(15)
+        
         #inputbox.send_keys("\n")
         edith_list_url = self.browser.current_url
         print('edith>>', edith_list_url )
@@ -113,7 +113,7 @@ class NewVisitorTest(LiveServerTestCase):
         512, delta=5) # Helps us to deal with rounding errors of the arithmetic to be within +/- 5 pixels.
 
         # She starts a new list and sees the input is nicely centered too
-        inputbox.send_keys('testin\n')
+        inputbox.send_keys('testing\n')
         inputbox = self.browser.find_element_by_id('id_new_item')
         self.assertAlmostEqual(inputbox.location['x'] + inputbox.size['width'] / 2, 
         512, delta=5)

@@ -9,70 +9,65 @@ from lists.models import Item, List
 
 class HomePageTest(TestCase):
 
-	def test_root_url_resolves_to_home_page_view(self):
-		found = resolve('/')
-		self.assertEqual(found.func, home_page)
+    def test_root_url_resolves_to_home_page_view(self):
+        found = resolve('/')
+        self.assertEqual(found.func, home_page)
 
-	def test_home_page_returns_correct_html(self):
-		request = HttpRequest() # Generate request
-		response = home_page(request)
-		#print(response.content.decode())
-		expected_html = render_to_string('home.html') # render allows substitution of python variables into HTML
-		#print(expected_html)
-		self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
+    def test_home_page_returns_correct_html(self):
+        request = HttpRequest() # Generate request
+        response = home_page(request)
+        #print(response.content.decode())
+        expected_html = render_to_string('home.html') # render allows substitution of python variables into HTML
+        #print(expected_html)
+        self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
 
 class NewListTest(TestCase):
-	def test_saving_a_POST_request(self):
-		self.client.post('/lists/new', data={'item_text': 'A new list item'}) # Look at class ListViewTest to understand client attribute.
+    def test_saving_a_POST_request(self):
+        self.client.post('/lists/new', data={'item_text': 'A new list item'}) # Look at class ListViewTest to understand client attribute.
 
-		self.assertEqual(Item.objects.count(), 1)
-		new_item = Item.objects.first() # The same as doing 'objects.all[0]'
-		self.assertEqual(new_item.text, 'A new list item') # Check the item's text is correct
+        self.assertEqual(Item.objects.count(), 1)
+        new_item = Item.objects.first() # The same as doing 'objects.all[0]'
+        self.assertEqual(new_item.text, 'A new list item') # Check the item's text is correct
 
-	def test_redirects_after_POST(self):
-		response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
-		self.assertRedirects(response, '/lists/the-only-list-in-the-world/')
+    def test_redirects_after_POST(self):
+        response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
+        self.assertRedirects(response, '/lists/%d/' % (new_list.id,))
 
 class ListAndItemModelsTest(TestCase):
 
-	def test_saving_and_retrieving_items(self):
-		list_ = List() # Create new list object
-		list_.save()
+    def test_saving_and_retrieving_items(self):
+        list_ = List() # Create new list object
+        list_.save()
 
-		first_item = Item()
-		first_item.text = 'The first (ever) list item'
-		first_item.list = list_ # Assigns each item to list_ object
-		first_item.save()
+        first_item = Item()
+        first_item.text = 'The first (ever) list item'
+        first_item.list = list_ # Assigns each item to list_ object
+        first_item.save()
 
-		second_item = Item()
-		second_item.text = 'Item the second'
-		second_item.list = list_
-		second_item.save()
-		saved_list = List.objects.first()
-		self.assertEqual(saved_list, list_)
+        second_item = Item()
+        second_item.text = 'Item the second'
+        second_item.list = list_
+        second_item.save()
+        saved_list = List.objects.first()
+        self.assertEqual(saved_list, list_)
 
-		saved_items = Item.objects.all()
-		self.assertEqual(saved_items.count(), 2) # Check list is properly saved
+        saved_items = Item.objects.all()
+        self.assertEqual(saved_items.count(), 2) # Check list is properly saved
 
-		first_saved_item = saved_items[0]
-		second_saved_item = saved_items[1]
-		self.assertEqual(first_saved_item.text, 'The first (ever) list item')
-		self.assertEqual(second_saved_item.list, list_)
-		self.assertEqual(second_saved_item.text, 'Item the second')
-		self.assertEqual(second_saved_item.list, list_)
+        first_saved_item = saved_items[0]
+        second_saved_item = saved_items[1]
+        self.assertEqual(first_saved_item.text, 'The first (ever) list item')
+        self.assertEqual(second_saved_item.list, list_)
+        self.assertEqual(second_saved_item.text, 'Item the second')
+        self.assertEqual(second_saved_item.list, list_)
 
 class ListViewTest(TestCase): # Checks URL resolution explicitly, tests view functions by calling them, and check that views render templates all at once.
-	
-	def test_users_list_template(self): # Check that it's using correct template
-		response = self.client.get('/lists/the-only-list-in-the-world/') # If you forget the / test will give this error "AssertionError: No templates used to render the response".
-		self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
-		
-	def test_displays_all_items(self):
-		list_ = List.objects.create()
-		Item.objects.create(text='itemey 1', list=list_)
-		Item.objects.create(text='itemey 2', list=list_)
-
-		#response = self.client.get('/lists/the-only-list-in-the-world/') # Instead of calling the view function directly, we use the Django test cilent, which is an attribute of the Django TestCase called self.client. We test it to get the URL we're testing--it's actually a very similar API to the one that Selenium uses. Some people dont like this because it's too much magic.
-
-		#self.assertContains(response, 'itemey 1') # Instead of using the slightly annoying assertIn/response.content.decode() dance, Django provides the assertContains method which knows how to deal with responses and the bytes of their content.
-		#self.assertContains(response, 'itemey 2')
+    
+    def test_users_list_template(self): # Check that it's using correct template
+        response = self.client.get('/lists/%d/' % (list_.id,)) # If you forget the / test will give this error "AssertionError: No templates used to render the response".
+        self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
+        
+    def test_displays_all_items(self):
+        list_ = List.objects.create()
+        Item.objects.create(text='itemey 1', list=list_)
+        Item.objects.create(text='itemey 2', list=list_)    
