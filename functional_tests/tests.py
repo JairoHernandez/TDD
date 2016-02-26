@@ -1,12 +1,30 @@
-#from django.test import LiveServerTestCase # Allows to play with a dummy DB.
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+#from django.test import LiveServerTestCase # Allows to play with a dummy DB. It cannot find static files.
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase # Like "runserver", StaticLiveServerTestCase will find static files
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
+import sys
 #import unittest
 
-#class NewVisitorTest(LiveServerTestCase):
-class NewVisitorTest(StaticLiveServerTestCase):
+#class NewVisitorTest(LiveServerTestCase): # "runserver" automatically finds static files, LiveServerTestCase does not
+class NewVisitorTest(StaticLiveServerTestCase): # this is why you use StaticLiveServerTestCase instead
+
+    @classmethod
+    def setUpClass(cls): # similar method to "setUp", also provide by "unittest", which is used to do test setup of the whole class--that means it only gets executed once, rather than before every test method.
+                         # This is hwere LiveServerTestCase/StaticLiveServerTestCase usually starts up its test server.
+        for arg in sys.argv:
+            if 'liveserver' in arg: # Look for "liveserver" in sys.argv
+                cls.server_url = 'http://' + arg.split('=')[1] # If we find it tell test class to skip normal "setUpClass" and just 
+                                                               # store away our staging server URL in a variable called "server_url" instead.
+                return
+        super().setUpClass()
+        cls.server_url = cls.live_server_url
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.server_url == cls.live_server_url:
+            super().tearDownClass()
+
 
     def setUp(self):
         self.browser = webdriver.Firefox()
@@ -15,8 +33,6 @@ class NewVisitorTest(StaticLiveServerTestCase):
     def tearDown(self):
         self.browser.quit()
      
-
-
     def check_for_row_in_list_table(self, row_text):
         table = self.browser.find_element_by_id('id_list_table')
         rows = table.find_elements_by_tag_name('tr')
@@ -26,7 +42,7 @@ class NewVisitorTest(StaticLiveServerTestCase):
     def test_can_start_a_list_and_retrieve_it_later(self):
         # Edith has heard about a cool new online to-do app. She goes
         # to check out its homepage
-        self.browser.get(self.live_server_url) # Replaces the hardcoded url.get('http://localhost:8000')
+        self.browser.get(self.server_url) # Replaces the hardcoded url.get('http://localhost:8000')
 
         # She notices the page title and header mention to-do lists
         self.assertIn('To-Do', self.browser.title)
@@ -72,7 +88,7 @@ class NewVisitorTest(StaticLiveServerTestCase):
         self.browser = webdriver.Firefox()
 
         # Francis visits the home page. There is no sign of Edith's list.
-        self.browser.get(self.live_server_url)
+        self.browser.get(self.server_url)
         page_text = self.browser.find_element_by_tag_name('body').text
         self.assertNotIn('Buy peacock feathers', page_text)
         self.assertNotIn('make a fly', page_text)
@@ -104,7 +120,7 @@ class NewVisitorTest(StaticLiveServerTestCase):
 
     def test_layout_and_styling(self):
         # Edit goes to the home page
-        self.browser.get(self.live_server_url)
+        self.browser.get(self.server_url)
         self.browser.set_window_size(1024, 768)
 
         # She noticecs the input box is nicely centers

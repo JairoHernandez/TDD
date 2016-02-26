@@ -10,3 +10,8 @@ class Item(models.Model):
 	list = models.ForeignKey(List, default=None)
 
 
+#Live on my ubuntu(no "tests")
+#sqlite> select * from lists_item;
+#id          text        list_id   
+#----------  ----------  ----------
+#1           hello       1         

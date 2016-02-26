@@ -22,16 +22,58 @@ class HomePageTest(TestCase):
         self.assertEqual(response.content.decode(), expected_html) # decode() converts response.content.bytes into unicode string, which allows us to compare strings with strings, and not bytes with bytes, in other words this avoids testing constants
 
 class NewListTest(TestCase):
-    def test_saving_a_POST_request(self):
+    def test_saving_a_POST_request(self): # Saving to db
         self.client.post('/lists/new', data={'item_text': 'A new list item'}) # Look at class ListViewTest to understand client attribute.
 
         self.assertEqual(Item.objects.count(), 1)
         new_item = Item.objects.first() # The same as doing 'objects.all[0]'
         self.assertEqual(new_item.text, 'A new list item') # Check the item's text is correct
 
-    def test_redirects_after_POST(self):
+    def test_redirects_after_POST(self): # Redirects you to the page with new entry 'A new list item'
         response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
+        new_list = List.objects.first()
         self.assertRedirects(response, '/lists/%d/' % (new_list.id,))
+
+
+class NewItemTest(TestCase):
+
+    def test_can_save_a_POST_request_to_an_existing_list(self):
+        other_list = List.objects.create()
+        correct_list = List.objects.create()
+
+        self.client.post(
+            '/lists/%d/add_item' % (correct_list.id,),
+            data={'item_text': 'A new item for an existing list'}
+        )
+
+        self.assertEqual(Item.objects.count(), 1)
+        new_item = Item.objects.first()
+        self.assertEqual(new_item.text, 'A new item for an existing list')
+        self.assertEqual(new_item.list, correct_list)
+
+
+    def test_redirects_to_list_view(self):
+        other_list = List.objects.create()
+        correct_list = List.objects.create()
+
+        response = self.client.post(
+            '/lists/%d/add_item' % (correct_list.id,),
+            data={'item_text': 'A new item for an existing list'}
+        )
+
+        self.assertRedirects(response, '/lists/%d/' % (correct_list.id,))
+
+class ListViewTest(TestCase): # Checks URL resolution explicitly, tests view functions by calling them, and check that views render templates all at once.
+    
+    def test_users_list_template(self): # Check that it's using correct template
+        list_ = List.objects.create()
+        response = self.client.get('/lists/%d/' % (list_.id,)) # If you forget the / test will give this error "AssertionError: No templates used to render the response".
+        self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
+        
+    def test_displays_all_items(self):
+        list_ = List.objects.create()
+        Item.objects.create(text='itemey 1', list=list_)
+        Item.objects.create(text='itemey 2', list=list_)    
 
 class ListAndItemModelsTest(TestCase):
 
@@ -60,14 +102,3 @@ class ListAndItemModelsTest(TestCase):
         self.assertEqual(second_saved_item.list, list_)
         self.assertEqual(second_saved_item.text, 'Item the second')
         self.assertEqual(second_saved_item.list, list_)
-
-class ListViewTest(TestCase): # Checks URL resolution explicitly, tests view functions by calling them, and check that views render templates all at once.
-    
-    def test_users_list_template(self): # Check that it's using correct template
-        response = self.client.get('/lists/%d/' % (list_.id,)) # If you forget the / test will give this error "AssertionError: No templates used to render the response".
-        self.assertTemplateUsed(response, 'list.html') # assertTemplateUsed is one of most useful functions Django test client gives us.
-        
-    def test_displays_all_items(self):
-        list_ = List.objects.create()
-        Item.objects.create(text='itemey 1', list=list_)
-        Item.objects.create(text='itemey 2', list=list_)    
